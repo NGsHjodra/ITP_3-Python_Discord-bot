@@ -1,3 +1,13 @@
+test-openai.py
+test-openai2.py
+test-discord.py
+test-discord2.py
+keys/
+
+*.txt
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
