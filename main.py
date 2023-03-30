@@ -8,6 +8,7 @@ import googleapiclient.errors
 import os
 import re
 import asyncio
+import time
 
 load_dotenv()
 bot_token = os.getenv('DISCORD_BOT_TOKEN')
@@ -22,16 +23,16 @@ model_id = 'gpt-3.5-turbo'
 
 youtube_key = os.getenv('YOUTUBE_API_KEY')
 
-# scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
-# os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-# api_service_name = "youtube"
-# api_version = "v3"
-# client_secrets_file = "client_secret_82526735468-r6g97t38470qqmeustsj5fhn5qldj28f.apps.googleusercontent.com.json"
-# flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-#     client_secrets_file, scopes)
-# credentials = flow.run_console()
-# youtube = googleapiclient.discovery.build(
-#     api_service_name, api_version, credentials=credentials)
+scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+api_service_name = "youtube"
+api_version = "v3"
+client_secrets_file = "client_secret_82526735468-r6g97t38470qqmeustsj5fhn5qldj28f.apps.googleusercontent.com.json"
+flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+    client_secrets_file, scopes)
+credentials = flow.run_console()
+youtube = googleapiclient.discovery.build(
+    api_service_name, api_version, credentials=credentials)
 
 youtube_api = googleapiclient.discovery.build(
     'youtube', 'v3', developerKey=youtube_key)
@@ -49,14 +50,38 @@ async def chat(interaction, prompt: str):
     )
     await interaction.response.send_message(response.choices[0].message.content)
 
-@tree.command(name = "create-playlist", description = "Create a playlist with chatGPT warning !!!!! It may halucinate some imaginary song out of nowhere", guild=discord.Object(id=guild_id))
+@tree.command(name = "create-yt-playlist", description = "Create a playlist with chatGPT warning !!!!! It may halucinate some imaginary song out of nowhere", guild=discord.Object(id=guild_id))
 async def create_playlist(interaction, prompt: str):
     await interaction.response.defer(ephemeral=True)
     await asyncio.sleep(1)
 
+    unique_name = str(int(time.time()))
+
+    try:
+        request = youtube.playlists().insert(
+            part="id,snippet,status",
+            body={
+                'snippet': {
+                'title': 'New Playlist' + unique_name,
+                'description': 'A new playlist created using the YouTube API',
+                'tags': ['API', 'Playlist'],
+                'defaultLanguage': 'en'
+            },
+            "status": {
+                "privacyStatus": "public"
+            }
+            }
+        )
+        response = request.execute()
+        playlist_id = response['id']
+    except Exception as e:
+        print(e)
+        await interaction.followup.send("Unable to create playlist")
+        return
+
     conversation = []
-    conversation.append({'role': 'user', 'content': 'Ignore all the instruction.Your are the song enthusiast. Your task is to create a playlist of given size or 10 if not given song base on the information someone will give it to you. Your playlist needs to be in the format of a table of song and artist. Do you understand? You don\'t need to ask any questions. Just provide the playlist information.'})
-    conversation.append({'role': 'system', 'content': 'Yes, I understand. As a song enthusiast, my task is to create a playlist based on the information provided to me. The playlist should be in the format of a table with the song and artist names. If the size of the playlist is not given, I will assume it to be 10. Please provide me with the necessary information to create the playlist.'})
+    conversation.append({'role': 'user', 'content': 'Ignore all the instruction.Your are the song enthusiast. Your task is to create a playlist of 20 song base on the information someone will give it to you. Your playlist needs to be in the format of a table of song and artist. Do you understand? You don\'t need to ask any questions. Just provide the playlist information.'})
+    conversation.append({'role': 'system', 'content': 'Yes, I understand. As a song enthusiast, my task is to create a playlist based on the information provided to me. The playlist should be in the format of a table with the song and artist names. If the size of the playlist is not given, I will assume it to be 20. Please provide me with the necessary information to create the playlist.'})
     conversation.append({'role': 'user', 'content': prompt})
 
     respone = openai.ChatCompletion.create(
@@ -67,22 +92,26 @@ async def create_playlist(interaction, prompt: str):
     pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
     matches = re.findall(pattern, respone.choices[0].message.content)
 
-    res_sample = ""
     for match in matches[2:]:
         search_response = youtube_api.search().list(
             q=match[1] + " " + match[0],
             type='video',
             part='id,snippet'
         ).execute()['items'][0]['id']['videoId']
-        res_sample += match[0] + " " + match[1] + 'https://www.youtube.com/watch?v=' + search_response + "\n"
-    
-    print(f"answer = {respone.choices[0].message.content}")
-    print(f"matches = {matches}")
-    print(f"response = {res_sample}")
+        youtube.playlistItems().insert(
+            part="snippet",
+            body={
+                'snippet': {
+                    'playlistId': playlist_id,
+                    'resourceId': {
+                        'kind': 'youtube#video',
+                        'videoId': search_response
+                    }
+                }
+            }
+        ).execute()
 
-    await interaction.followup.send("Playlist created! Here is a sample of the playlist: \n" + res_sample)
-
-# @tree.command(name = "
+    await interaction.followup.send("Playlist created! Here is a the playlist:" + "https://www.youtube.com/playlist?list=" + playlist_id)
 
 @client.event
 async def on_ready():
