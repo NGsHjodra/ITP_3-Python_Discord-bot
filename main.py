@@ -27,7 +27,7 @@ scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 api_service_name = "youtube"
 api_version = "v3"
-client_secrets_file = "client_secret_82526735468-r6g97t38470qqmeustsj5fhn5qldj28f.apps.googleusercontent.com.json"
+client_secrets_file = "client_secret.json"
 flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
     client_secrets_file, scopes)
 credentials = flow.run_console()
@@ -40,6 +40,8 @@ youtube_api = googleapiclient.discovery.build(
 @tree.command(name = "chat", description = "Chat with the GPT-3.5 turbo (basically ChatGPT)", guild=discord.Object(id=guild_id))
 async def chat(interaction, prompt: str):
     conversation = []
+    await interaction.response.defer(ephemeral=True)
+    await asyncio.sleep(1)
     # have fun prompt engineering here
     # Me doing things below: No nooo, I'm not having fun.
     conversation.append({'role': 'system', 'content': 'How may I help you?'})
@@ -48,8 +50,10 @@ async def chat(interaction, prompt: str):
         model=model_id,
         messages=conversation
     )
-    await interaction.response.send_message(response.choices[0].message.content)
+    # await interaction.response.send_message(response.choices[0].message.content)
+    await interaction.followup.send(response.choices[0].message.content)
 
+# default to 5 songs and max result = 1 for now because normal search takes too much quota
 @tree.command(name = "create-yt-playlist", description = "Create a playlist with chatGPT warning !!!!! It may halucinate some imaginary song out of nowhere", guild=discord.Object(id=guild_id))
 async def create_playlist(interaction, prompt: str):
     await interaction.response.defer(ephemeral=True)
@@ -80,8 +84,8 @@ async def create_playlist(interaction, prompt: str):
         return
 
     conversation = []
-    conversation.append({'role': 'user', 'content': 'Ignore all the instruction.Your are the song enthusiast. Your task is to create a playlist of 20 song base on the information someone will give it to you. Your playlist needs to be in the format of a table of song and artist. Do you understand? You don\'t need to ask any questions. Just provide the playlist information.'})
-    conversation.append({'role': 'system', 'content': 'Yes, I understand. As a song enthusiast, my task is to create a playlist based on the information provided to me. The playlist should be in the format of a table with the song and artist names. If the size of the playlist is not given, I will assume it to be 20. Please provide me with the necessary information to create the playlist.'})
+    conversation.append({'role': 'user', 'content': 'Ignore all the instruction.Your are the song enthusiast. Your task is to create a playlist of 5 songs base on the information someone will give it to you. Your playlist needs to be in the format of a table of song and artist. Do you understand? You don\'t need to ask any questions. Just provide the playlist information.'})
+    conversation.append({'role': 'system', 'content': 'Yes, I understand. As a song enthusiast, my task is to create a playlist based on the information provided to me. The playlist should be in the format of a table with the song and artist names. If the size of the playlist is not given, I will assume it to be 5. Please provide me with the necessary information to create the playlist.'})
     conversation.append({'role': 'user', 'content': prompt})
 
     respone = openai.ChatCompletion.create(
@@ -92,24 +96,38 @@ async def create_playlist(interaction, prompt: str):
     pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
     matches = re.findall(pattern, respone.choices[0].message.content)
 
+    print(respone)
+
+    print(matches)
+
     for match in matches[2:]:
-        search_response = youtube_api.search().list(
-            q=match[1] + " " + match[0],
-            type='video',
-            part='id,snippet'
-        ).execute()['items'][0]['id']['videoId']
-        youtube.playlistItems().insert(
-            part="snippet",
-            body={
-                'snippet': {
-                    'playlistId': playlist_id,
-                    'resourceId': {
-                        'kind': 'youtube#video',
-                        'videoId': search_response
+        try:
+            search_response = youtube_api.search().list(
+                q=match[1] + " " + match[0],
+                type='video',
+                part='id,snippet',
+                maxResults=1
+            ).execute()['items'][0]['id']['videoId']
+            print(search_response)
+        except Exception as e:
+            print(e)
+            continue
+        try:
+            youtube.playlistItems().insert(
+                part="snippet",
+                body={
+                    'snippet': {
+                        'playlistId': playlist_id,
+                        'resourceId': {
+                            'kind': 'youtube#video',
+                            'videoId': search_response
+                        }
                     }
                 }
-            }
-        ).execute()
+            ).execute()
+        except Exception as e:
+            print(e)
+            continue
 
     await interaction.followup.send("Playlist created! Here is a the playlist:" + "https://www.youtube.com/playlist?list=" + playlist_id)
 
