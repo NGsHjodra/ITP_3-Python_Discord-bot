@@ -14,13 +14,16 @@ jobs:
         run: |
           echo "Creating empty id_rsa file with correct permissions..."
           install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "Done creating id_rsa file."
           echo "Writing private key to id_rsa file..."
           echo "${{ secrets.AWS_LIGHTSAIL }}" > ~/.ssh/id_rsa
+          echo "Done writing private key to id_rsa file."
           echo "Adding host key to known_hosts file..."
           ssh-keyscan -H "${{ vars.IP }}" > ~/.ssh/known_hosts
+          echo "Done adding host key to known_hosts file."
       - name: Write Google client secret JSON file
-        env:
-          GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
+        # env:
+        #   GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
         run: |
           echo "${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}" > client_secret.json
       - name: Deploy with git pull and running update.sh on the instance
