@@ -20,7 +20,7 @@ jobs:
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo "${{ secrets.AWS_LIGHTSAIL }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ vars.DEPLOY_SERVER_IP }}" > ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ vars.IP }}" > ~/.ssh/known_hosts
       - name: Write Google client secret JSON file
         env:
           GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
