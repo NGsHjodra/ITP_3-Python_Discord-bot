@@ -9,12 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      COMPOSE_PROJECT_NAME: bot_history
-      DOCKER_ENV: prod
-      POSTGRES_HOST: database
-      POSTGRES_DB: bot_history
-      POSTGRES_USER: postgres
     steps:
       - name: Create SSH key
         run: |
