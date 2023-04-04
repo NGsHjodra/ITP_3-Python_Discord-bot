@@ -9,6 +9,8 @@ import os
 import re
 import asyncio
 import time
+import psycopg2
+import urllib.parse as urlparse
 
 load_dotenv()
 bot_token = os.getenv('DISCORD_BOT_TOKEN')
@@ -24,37 +26,63 @@ model_id = 'gpt-3.5-turbo'
 youtube_key = os.getenv('YOUTUBE_API_KEY')
 
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-api_service_name = "youtube"
-api_version = "v3"
-client_secrets_file = "client_secret.json"
-flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-    client_secrets_file, scopes)
-credentials = flow.run_console()
-youtube = googleapiclient.discovery.build(
-    api_service_name, api_version, credentials=credentials)
+
+youtube = None
 
 youtube_api = googleapiclient.discovery.build(
     'youtube', 'v3', developerKey=youtube_key)
 
-@tree.command(name = "chat", description = "Chat with the GPT-3.5 turbo (basically ChatGPT)", guild=discord.Object(id=guild_id))
-async def chat(interaction, prompt: str):
-    conversation = []
+conn = psycopg2.connect(host='localhost',
+                            database=os.getenv('POSTGRES_DB'),
+                            user=os.getenv('POSTGRES_USER'),
+                            password=os.getenv('POSTGRES_PASSWORD'))
+
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS history')
+cur.execute('CREATE TABLE history ( name varchar(255), url varchar(255) )')
+
+@tree.command(name = "yt-list", description = "display list of playlist", guild=discord.Object(id=guild_id))
+async def chat(interaction):
     await interaction.response.defer(ephemeral=True)
     await asyncio.sleep(1)
-    # have fun prompt engineering here
-    # Me doing things below: No nooo, I'm not having fun.
-    conversation.append({'role': 'system', 'content': 'How may I help you?'})
-    conversation.append({'role': 'user', 'content': prompt})
-    response = openai.ChatCompletion.create(
-        model=model_id,
-        messages=conversation
-    )
-    # await interaction.response.send_message(response.choices[0].message.content)
-    await interaction.followup.send(response.choices[0].message.content)
+    cur.execute('SELECT * FROM history WHERE name = %s', (interaction.user.name,))
+    rows = cur.fetchall()
 
-# default to 5 songs and max result = 1 for now because normal search takes too much quota
-@tree.command(name = "create-yt-playlist", description = "Create a playlist with chatGPT warning !!!!! It may halucinate some imaginary song out of nowhere", guild=discord.Object(id=guild_id))
+    if len(rows) == 0:
+        await interaction.followup.send("No history found")
+        return
+
+    response = "Here is the list of playlists : \n"
+    curr_playlist = 0
+    for row in rows:
+        curr_playlist += 1
+        decoded_url = urlparse.unquote(row[1])
+        response += str(curr_playlist) + " " + decoded_url + "\n"
+    await interaction.followup.send(response)
+
+@tree.command(name = "yt-auth", description = "Authenticate with youtube", guild=discord.Object(id=guild_id))
+async def auth_yt(interaction):
+    await interaction.response.defer(ephemeral=True)
+    await asyncio.sleep(1)
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        'client_secret.json', scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+    auth_uri, _ = flow.authorization_url(prompt='consent')
+    print(auth_uri)
+    await interaction.followup.send("Please go to this url, authorize the bot and /yt-code the code : " + auth_uri)
+
+@tree.command(name = "yt-code", description = "Set the youtube code", guild=discord.Object(id=guild_id))
+async def set_yt(interaction, code: str):
+    global youtube
+    await interaction.response.defer(ephemeral=True)
+    await asyncio.sleep(1)
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        'client_secret.json', scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+    flow.fetch_token(code=code)
+    youtube = googleapiclient.discovery.build(
+        'youtube', 'v3', credentials=flow.credentials)
+    await interaction.followup.send("Successfully setup youtube api")
+
+@tree.command(name = "yt-create-playlist", description = "Create a playlist with chatGPT warning !!!!! It may halucinate some imaginary song out of nowhere", guild=discord.Object(id=guild_id))
 async def create_playlist(interaction, prompt: str):
     await interaction.response.defer(ephemeral=True)
     await asyncio.sleep(1)
@@ -128,6 +156,8 @@ async def create_playlist(interaction, prompt: str):
         except Exception as e:
             print(e)
             continue
+
+    cur.execute('INSERT INTO history (name, url) VALUES (%s, %s)', (interaction.user.name, 'https://www.youtube.com/playlist?list=' + playlist_id))
 
     await interaction.followup.send("Playlist created! Here is a the playlist:" + "https://www.youtube.com/playlist?list=" + playlist_id)
 
