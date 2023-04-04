@@ -29,8 +29,9 @@ scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 youtube = None
 
-youtube_api = googleapiclient.discovery.build(
-    'youtube', 'v3', developerKey=youtube_key)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "client_secret.json"
+
+youtube_api = googleapiclient.discovery.build('youtube', 'v3', developerKey=youtube_key)
 
 conn = psycopg2.connect(host='localhost',
                             database=os.getenv('POSTGRES_DB'),
