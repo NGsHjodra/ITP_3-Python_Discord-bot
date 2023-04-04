@@ -12,8 +12,11 @@ jobs:
     steps:
       - name: Create SSH key
         run: |
+          echo "Creating empty id_rsa file with correct permissions..."
           install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "Writing private key to id_rsa file..."
           echo "${{ secrets.AWS_LIGHTSAIL }}" > ~/.ssh/id_rsa
+          echo "Adding host key to known_hosts file..."
           ssh-keyscan -H "${{ vars.IP }}" > ~/.ssh/known_hosts
       - name: Write Google client secret JSON file
         env:
