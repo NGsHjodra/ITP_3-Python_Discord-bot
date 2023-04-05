@@ -3,5 +3,5 @@ sudo docker compose up -d --build
 pip install -r requirements.txt
 echo "Waiting for the database to be ready..."
 sleep 10
-sudo service postgresql status
+sudo docker ps
 python3 main.py
