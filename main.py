@@ -33,10 +33,10 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "client_secret.json"
 
 # youtube_api = googleapiclient.discovery.build('youtube', 'v3', developerKey=youtube_key)
 
-conn = psycopg2.connect(host=os.getenv('POSTGRES_HOST_EXTERNAL'),
-                            database=os.getenv('POSTGRES_DB'),
-                            user=os.getenv('POSTGRES_USER'),
-                            password=os.getenv('POSTGRES_PASSWORD'))
+conn = psycopg2.connect(host='localhost',
+                        database=os.getenv('POSTGRES_DB'),
+                        user=os.getenv('POSTGRES_USER'),
+                        password=os.getenv('POSTGRES_PASSWORD'))
 
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS history')
