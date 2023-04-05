@@ -9,20 +9,20 @@ services:
       volumes:
         - db-data:/var/lib/postgresql/data:rw
 
-  pgadmin:
-        image: dpage/pgadmin4
-        env_file:
-          - .env
-        restart: 'no'
-        depends_on:
-          - database
-        ports:
-          - "8085:80"
-        volumes:
-          - pgadmin:/root/.pgadmin
-          - pgadmin-data:/var/lib/pgadmin
+  # pgadmin:
+  #       image: dpage/pgadmin4
+  #       env_file:
+  #         - .env
+  #       restart: 'no'
+  #       depends_on:
+  #         - database
+  #       ports:
+  #         - "8085:80"
+  #       volumes:
+  #         - pgadmin:/root/.pgadmin
+  #         - pgadmin-data:/var/lib/pgadmin
 
 volumes:
   db-data:
-  pgadmin:
-  pgadmin-data:
+  # pgadmin:
+  # pgadmin-data:
