@@ -21,12 +21,12 @@ jobs:
           echo "Adding host key to known_hosts file..."
           ssh-keyscan -H "${{ vars.IP }}" > ~/.ssh/known_hosts
           echo "Done adding host key to known_hosts file."
-      - name: Write Google client secret JSON file
-        # env:
-        #   GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
-        run: |
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}" > client_secret.json
-      - name: Deploy with git pull and running update.sh on the instance
+      # - name: Write Google client secret JSON file
+      #   # env:
+      #   #   GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
+      #   run: |
+      #     echo "${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}" > client_secret.json
+      # - name: Deploy with git pull and running update.sh on the instance
         env:
           COMPOSE_PROJECT_NAME: bot_history
           DOCKER_ENV: prod
