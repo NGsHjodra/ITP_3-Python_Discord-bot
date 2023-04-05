@@ -33,7 +33,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "client_secret.json"
 
 # youtube_api = googleapiclient.discovery.build('youtube', 'v3', developerKey=youtube_key)
 
-conn = psycopg2.connect(host='localhost',
+conn = psycopg2.connect(host='13.251.156.150',
                             database=os.getenv('POSTGRES_DB'),
                             user=os.getenv('POSTGRES_USER'),
                             password=os.getenv('POSTGRES_PASSWORD'))
