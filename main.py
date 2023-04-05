@@ -210,10 +210,18 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     # Add the Flask app to the event loop
-    loop.create_task(start_flask_app())
+    # loop.create_task(asyncio.to_thread(app.run))
+    # loop.run_until_complete(asyncio.gather(
+    #     start_flask_app(),
+    #     start_discord_bot()
+    # ))
 
-    # Start the Discord bot in the event loop
+    # Schedule both coroutines in the event loop
+    loop.create_task(asyncio.to_thread(app.run))
     loop.create_task(start_discord_bot())
 
     # Run the event loop
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    finally:
+        loop.close()
