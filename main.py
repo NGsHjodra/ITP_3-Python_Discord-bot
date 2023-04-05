@@ -23,7 +23,7 @@ tree = app_commands.CommandTree(client)
 openai.api_key = os.getenv('OPENAI_API_KEY')
 model_id = 'gpt-3.5-turbo'
 
-youtube_key = os.getenv('YOUTUBE_API_KEY')
+# youtube_key = os.getenv('YOUTUBE_API_KEY')
 
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
@@ -31,7 +31,7 @@ youtube = None
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "client_secret.json"
 
-youtube_api = googleapiclient.discovery.build('youtube', 'v3', developerKey=youtube_key)
+# youtube_api = googleapiclient.discovery.build('youtube', 'v3', developerKey=youtube_key)
 
 conn = psycopg2.connect(host='localhost',
                             database=os.getenv('POSTGRES_DB'),
@@ -131,7 +131,7 @@ async def create_playlist(interaction, prompt: str):
 
     for match in matches[2:]:
         try:
-            search_response = youtube_api.search().list(
+            search_response = youtube.search().list(
                 q=match[1] + " " + match[0],
                 type='video',
                 part='id,snippet',
