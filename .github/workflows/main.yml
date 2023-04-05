@@ -27,17 +27,17 @@ jobs:
       #   run: |
       #     echo "${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}" > client_secret.json
       - name: Deploy with git pull and running update.sh on the instance
-        env:
-          COMPOSE_PROJECT_NAME: bot_history
-          DOCKER_ENV: prod
-          POSTGRES_HOST: database
-          POSTGRES_DB: bot_history
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        # env:
+        #   COMPOSE_PROJECT_NAME: bot_history
+        #   DOCKER_ENV: prod
+        #   POSTGRES_HOST: database
+        #   POSTGRES_DB: bot_history
+        #   POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        #   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        #   DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        #   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        #   DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+        #   YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           echo "Deploying to ${{ vars.IP }} ..."
           ssh -i ~/.ssh/id_rsa ubuntu@"${{ vars.IP }}" "cd ITP_3-Python_Discord-bot && git checkout -- . && git pull && chmod u+x update.sh && ./update.sh"
