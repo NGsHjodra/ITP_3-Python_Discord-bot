@@ -4,3 +4,4 @@ openai-discord/
 *.log
 .env
 client_secret.json
+*.png

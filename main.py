@@ -11,6 +11,13 @@ import asyncio
 import time
 import psycopg2
 import urllib.parse as urlparse
+from flask import Flask, render_template
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+
+app = Flask(__name__)
 
 load_dotenv()
 bot_token = os.getenv('DISCORD_BOT_TOKEN')
@@ -41,6 +48,32 @@ conn = psycopg2.connect(host='localhost',
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS history')
 cur.execute('CREATE TABLE history ( name varchar(255), url varchar(255) )')
+
+@app.route('/')
+def index():
+    cur.execute('SELECT * FROM history')
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        return render_template('index.html', rows=rows, image=None)
+    name_counts = {}
+    for row in rows:
+        name = row[0]
+        if name in name_counts:
+            name_counts[name] += 1
+        else:
+            name_counts[name] = 1
+
+    names = list(name_counts.keys())
+    counts = list(name_counts.values())
+    y_pos = np.arange(len(names))
+
+    plt.bar(y_pos, counts, align='center', alpha=0.5)
+    plt.xticks(y_pos, names)
+    plt.ylabel('Number of URLs')
+    plt.title('Name vs. Number of URLs')
+    chart_path = os.path.join('static', 'chart.png')
+    plt.savefig(chart_path)
+    return render_template('index.html', rows=rows, chart_path=chart_path)
 
 @tree.command(name = "yt-list", description = "display list of playlist", guild=discord.Object(id=guild_id))
 async def chat(interaction):
@@ -167,4 +200,20 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=guild_id))
     print("Ready!")
 
-client.run(bot_token)
+def start_flask_app():
+    app.run(port=5000, debug=True)
+
+async def start_discord_bot():
+    await client.start(bot_token)
+    
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+
+    # Add the Flask app to the event loop
+    loop.create_task(asyncio.to_thread(app.run))
+
+    # Start the Discord bot in the event loop
+    loop.create_task(start_discord_bot())
+
+    # Run the event loop
+    loop.run_forever()
