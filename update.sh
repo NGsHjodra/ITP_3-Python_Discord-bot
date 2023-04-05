@@ -6,4 +6,5 @@ echo "Waiting for the database to be ready..."
 sleep 10
 sudo docker ps
 # python3 main.py
-/home/ubuntu/.local/bin/gunicorn -b 0.0.0.0:5000 main:app --daemon
+/home/ubuntu/.local/bin/gunicorn -b 0.0.0.0:5000 main:app --preload --daemon &
+python main.py
