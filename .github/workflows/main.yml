@@ -26,7 +26,7 @@ jobs:
       #   #   GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
       #   run: |
       #     echo "${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}" > client_secret.json
-      # - name: Deploy with git pull and running update.sh on the instance
+      - name: Deploy with git pull and running update.sh on the instance
         env:
           COMPOSE_PROJECT_NAME: bot_history
           DOCKER_ENV: prod
