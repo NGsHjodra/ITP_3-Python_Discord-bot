@@ -200,8 +200,8 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=guild_id))
     print("Ready!")
 
-def start_flask_app():
-    app.run(port=5000, debug=True)
+async def start_flask_app():
+    app.run(port=5000)
 
 async def start_discord_bot():
     await client.start(bot_token)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     # Add the Flask app to the event loop
-    loop.create_task(asyncio.to_thread(app.run))
+    loop.create_task(start_flask_app())
 
     # Start the Discord bot in the event loop
     loop.create_task(start_discord_bot())
