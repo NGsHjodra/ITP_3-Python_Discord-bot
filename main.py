@@ -201,7 +201,7 @@ async def on_ready():
     print("Ready!")
 
 async def start_flask_app():
-    app.run(port=5000)
+    app.run(port=8085, host='0.0.0.0')
 
 async def start_discord_bot():
     await client.start(bot_token)
@@ -209,15 +209,8 @@ async def start_discord_bot():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
-    # Add the Flask app to the event loop
-    # loop.create_task(asyncio.to_thread(app.run))
-    # loop.run_until_complete(asyncio.gather(
-    #     start_flask_app(),
-    #     start_discord_bot()
-    # ))
-
     # Schedule both coroutines in the event loop
-    loop.create_task(asyncio.to_thread(app.run))
+    loop.create_task(asyncio.to_thread(lambda: app.run(port=8085, host='0.0.0.0')))
     loop.create_task(start_discord_bot())
 
     # Run the event loop
